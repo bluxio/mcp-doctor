@@ -1,0 +1,48 @@
+:root {
+  --bg: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #cbd5e1;
+  --accent: #0e7490;
+  --accent-soft: #cffafe;
+  --pass: #15803d;
+  --warn: #a16207;
+  --fail: #b91c1c;
+  --skip: #64748b;
+  --hero-glow: radial-gradient(ellipse 80% 60% at 70% 10%, #a5f3fc66, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, #bae6fd55, transparent 50%),
+    linear-gradient(180deg, #e2e8f0 0%, #f8fafc 45%, #f1f5f9 100%);
+  --font-display: "Syne", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}

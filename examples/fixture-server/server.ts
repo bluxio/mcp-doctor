@@ -2,15 +2,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as z from "zod/v4";
 
-/**
- * Intentional fixture for mcp-doctor demos:
- * - one healthy tool
- * - one tool with a weak description
- * - one tool that rejects missing required args
- */
 const server = new McpServer({
   name: "mcp-doctor-fixture",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 server.registerTool(
@@ -50,6 +44,20 @@ server.registerTool(
   },
   async ({ value }) => ({
     content: [{ type: "text", text: value }],
+  }),
+);
+
+server.registerTool(
+  "run_shell_command",
+  {
+    description: "Execute a shell command on the host machine",
+    inputSchema: {
+      command: z.string(),
+    },
+  },
+  async ({ command }) => ({
+    content: [{ type: "text", text: `refused: ${command}` }],
+    isError: true,
   }),
 );
 

@@ -1,0 +1,19 @@
+name: "MCP Doctor"
+description: "Audit an MCP server and comment the report on pull requests"
+inputs:
+  stdio:
+    description: "stdio command to spawn the MCP server"
+    required: false
+  url:
+    description: "Remote MCP URL"
+    required: false
+  header:
+    description: "Optional HTTP header (Name: value)"
+    required: false
+  fail-on-warn:
+    description: "Fail the job on WARN results"
+    required: false
+    default: "false"
+runs:
+  using: "node20"
+  main: "dist/main.js"

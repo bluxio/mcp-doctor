@@ -1,22 +1,24 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { writeFile } from "node:fs/promises";
-import { buildTargetFromCli, connectToTarget } from "./connect/client.js";
-import { runDoctor } from "./runner.js";
 import {
+  buildTargetFromCli,
+  connectToTarget,
   exitCodeForReport,
   printTerminalReport,
+  reportToHtml,
   reportToJson,
-} from "./reporters/terminal.js";
+  runDoctor,
+} from "@mcp-doctor/core";
 
 const program = new Command();
 
 program
   .name("mcp-doctor")
   .description(
-    "Audit MCP servers for handshake, schema quality, error handling, and latency",
+    "Audit MCP servers for handshake, schema quality, permissions, error handling, and latency",
   )
-  .version("0.1.0")
+  .version("0.2.0")
   .option(
     "--stdio <command>",
     'Spawn a local MCP server, e.g. --stdio "npx -y @modelcontextprotocol/server-everything"',
@@ -28,13 +30,17 @@ program
     (value: string, previous: string[]) => [...previous, value],
     [] as string[],
   )
+  .option("--timeout <ms>", "Connection timeout in milliseconds", "20000")
   .option("--json", "Print JSON report to stdout")
+  .option("--html <file>", "Write HTML report to a file")
   .option("--out <file>", "Write JSON report to a file")
   .action(async (opts: {
     stdio?: string;
     url?: string;
     header: string[];
+    timeout?: string;
     json?: boolean;
+    html?: string;
     out?: string;
   }) => {
     let connected;
@@ -51,23 +57,23 @@ program
 
       if (opts.out) {
         await writeFile(opts.out, reportToJson(report), "utf8");
-        if (!opts.json) {
-          console.log(`Wrote ${opts.out}`);
-        }
+        if (!opts.json) console.log(`Wrote ${opts.out}`);
+      }
+      if (opts.html) {
+        await writeFile(opts.html, reportToHtml(report), "utf8");
+        if (!opts.json) console.log(`Wrote ${opts.html}`);
       }
 
       process.exitCode = exitCodeForReport(report);
     } catch (error) {
-      console.error(
-        error instanceof Error ? error.message : String(error),
-      );
+      console.error(error instanceof Error ? error.message : String(error));
       process.exitCode = 2;
     } finally {
       if (connected) {
         try {
           await connected.close();
         } catch {
-          // ignore close errors
+          // ignore
         }
       }
     }

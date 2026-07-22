@@ -1,78 +1,86 @@
 # MCP Doctor
 
-Ship MCP servers that actually work in production hosts.
+**Ship MCP servers that actually work in Claude, Cursor, VS Code, and ChatGPT.**
+
+CLI + live web audit + GitHub Action. Same engine everywhere.
 
 ```bash
-npx tsx src/cli.ts --stdio "npx -y @modelcontextprotocol/server-everything"
+pnpm install
+pnpm --filter @mcp-doctor/core build
+pnpm --filter mcp-doctor doctor:fixture
+pnpm --filter @mcp-doctor/web dev
+# open http://localhost:3456
 ```
 
-MCP Doctor connects to a local or remote MCP server and runs protocol, schema, error-handling, and latency checks — then prints a CI-friendly report.
+## What this is
 
-## Quick start
+MCP servers give AI apps tools. Many of them break in real hosts because of weak schemas, missing descriptions, bad error handling, or risky tool surfaces.
 
-```bash
-git clone https://github.com/bluxio/mcp-doctor.git
-cd mcp-doctor
-npm install
-npm run build
+MCP Doctor connects to your server and runs a checklist:
 
-# audit any stdio server
-node dist/cli.js --stdio "npx -y @modelcontextprotocol/server-everything"
-
-# audit a remote endpoint (Streamable HTTP, SSE fallback)
-node dist/cli.js --url https://your-server.example/mcp \
-  --header "Authorization: Bearer TOKEN"
-
-# JSON for CI
-node dist/cli.js --stdio "node server.js" --json --out report.json
-```
-
-### Demo fixture
-
-```bash
-npm run doctor:fixture
-```
-
-```text
-MCP Doctor
-Target: tsx examples/fixture-server/server.ts
-Server: mcp-doctor-fixture@0.1.0
-
-PASS  Initialize handshake
-PASS  Ping
-WARN  Tool schema quality
-      weak_tool: missing description
-PASS  Resources listing
-SKIP  Prompts listing
-PASS  Malformed input handling
-PASS  listTools latency
-
-Summary: 5 pass · 1 warn · 0 fail · 1 skip
-```
-
-## Checks
-
-| Check | What it does |
+| Check | Purpose |
 | --- | --- |
 | Handshake | Connect + initialize |
-| Ping | Protocol ping support |
-| Tool schemas | Names, descriptions, `inputSchema` shape |
-| Resources / prompts | List when capability is advertised |
-| Malformed input | Call a required-arg tool with `{}` |
-| Latency | `listTools` timing over 3 samples |
+| Ping | Protocol ping |
+| Tool schemas | Names, descriptions, `inputSchema` |
+| Duplicate names | Fail on collisions |
+| Resources / prompts | List when advertised |
+| Malformed input | Required args must reject `{}` |
+| Latency | `listTools` timing |
+| Permissions | Risk-ranked tool manifest |
 
-**Exit codes:** `0` no failures · `1` failed checks · `2` connection/CLI error
+## Monorepo
 
-## Why this exists
+```text
+apps/web          → Next.js landing + /audit UI
+packages/core     → shared audit engine
+packages/cli      → mcp-doctor binary
+action/           → GitHub Action
+examples/         → fixture server
+```
 
-MCP adoption is ahead of MCP ops. Servers often work on your laptop, then fail in Claude, Cursor, VS Code, or ChatGPT because of weak schemas, missing descriptions, bad error handling, or timeouts.
+## CLI
 
-Catch those before users do.
+```bash
+pnpm --filter @mcp-doctor/core build
+pnpm --filter mcp-doctor build
 
-## Library use
+# local server
+pnpm --filter mcp-doctor exec node dist/cli.js --stdio "npx -y @modelcontextprotocol/server-everything"
+
+# remote
+node packages/cli/dist/cli.js --url https://mcp.example.com/mcp \
+  --header "Authorization: Bearer TOKEN"
+
+# reports
+node packages/cli/dist/cli.js --stdio "…" --json --out report.json --html report.html
+```
+
+Exit codes: `0` no fails · `1` failed checks · `2` connection/CLI error
+
+## Web UI
+
+```bash
+pnpm --filter @mcp-doctor/web dev
+```
+
+- `/` — product page  
+- `/audit` — run the demo fixture or audit a remote URL  
+
+## GitHub Action
+
+```yaml
+- uses: bluxio/mcp-doctor/action@main
+  with:
+    stdio: npx tsx ./my-mcp-server.ts
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+## Library
 
 ```ts
-import { connectToTarget, runDoctor } from "mcp-doctor";
+import { connectToTarget, runDoctor } from "@mcp-doctor/core";
 
 const { client, close } = await connectToTarget({
   kind: "stdio",
@@ -82,21 +90,8 @@ const { client, close } = await connectToTarget({
 });
 
 const report = await runDoctor(client, "my-server");
-console.log(report.summary);
 await close();
 ```
-
-## Roadmap
-
-- [x] CLI + core checks + fixture
-- [ ] GitHub Action / PR comment
-- [ ] Auth smoke tests for remote OAuth servers
-- [ ] Host compatibility notes (Claude / Copilot / Cursor)
-- [ ] Hosted run history (optional)
-
-## Contributing
-
-Issues and PRs welcome. If you maintain an MCP server and want a free audit, open an issue with your `--stdio` / `--url` setup.
 
 ## License
 

@@ -27,6 +27,18 @@ export interface DoctorReport {
     skip: number;
   };
   checks: CheckResult[];
+  permissionManifest?: PermissionManifest;
+}
+
+export interface PermissionManifest {
+  tools: Array<{
+    name: string;
+    description?: string;
+    requiredArgs: string[];
+    risk: "low" | "medium" | "high";
+    riskReasons: string[];
+  }>;
+  generatedAt: string;
 }
 
 export interface ConnectTarget {
@@ -36,4 +48,5 @@ export interface ConnectTarget {
   args?: string[];
   url?: string;
   headers?: Record<string, string>;
+  timeoutMs?: number;
 }
