@@ -49,4 +49,5 @@ export interface ConnectTarget {
   url?: string;
   headers?: Record<string, string>;
   timeoutMs?: number;
+  cwd?: string;
 }

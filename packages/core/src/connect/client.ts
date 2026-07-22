@@ -66,6 +66,7 @@ export async function connectToTarget(
       command: target.command,
       args: target.args ?? [],
       stderr: "pipe",
+      cwd: target.cwd,
     });
     const client = new Client({ name: "mcp-doctor", version: "0.2.0" });
     await withTimeout(client.connect(transport), timeoutMs, "stdio connect");

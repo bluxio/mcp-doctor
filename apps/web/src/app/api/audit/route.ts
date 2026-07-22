@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import {
   connectToTarget,
@@ -10,16 +10,31 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function resolveRepoRoot(): string {
+  const candidates = [
+    process.cwd(),
+    path.resolve(process.cwd(), "../.."),
+    path.resolve(process.cwd(), "../../.."),
+  ];
+  for (const dir of candidates) {
+    const server = path.join(dir, "examples/fixture-server/server.ts");
+    if (existsSync(server)) return dir;
+  }
+  throw new Error(
+    `Could not find examples/fixture-server/server.ts from cwd=${process.cwd()}`,
+  );
+}
+
 function fixtureTarget(): ConnectTarget {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  // apps/web/src/app/api/audit -> repo root
-  const root = path.resolve(here, "../../../../../../");
+  const root = resolveRepoRoot();
   const server = path.join(root, "examples/fixture-server/server.ts");
+  const tsxBin = path.join(root, "node_modules/.bin/tsx");
   return {
     kind: "stdio",
     label: "demo-fixture",
-    command: "npx",
-    args: ["tsx", server],
+    command: existsSync(tsxBin) ? tsxBin : "npx",
+    args: existsSync(tsxBin) ? [server] : ["tsx", server],
+    cwd: root,
     timeoutMs: 30_000,
   };
 }
